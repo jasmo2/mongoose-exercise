@@ -89,7 +89,7 @@ app.post('/', async (req, res) => {
 
     const result = await Movies.findAndInsertMany(movies)
     console.log('TCL: result', result)
-  } catch {
+  } catch (error) {
     console.error(error)
   }
 
