@@ -18,18 +18,20 @@
  * Lo vamos a hacer con la librería AXIOS
  */
 require('dotenv').config()
-const axios = require('axios')
 const bodyParser = require('body-parser')
 const express = require('express')
 const methodOverride = require('method-override')
 
-const { Movies } = require('./connection')
+const htmlApp = require('./routes')
+const api = require('./routes/api')
+
 const portNumber = process.env.PORT || 3000
 
 const app = express()
 
 app.use('/public', express.static('public'))
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json())
 app.use(
   methodOverride((req, res) => {
     if (req.body && typeof req.body === 'object' && '_method' in req.body) {
@@ -41,60 +43,9 @@ app.use(
   })
 )
 
+app.use('/', htmlApp)
+app.use('/api', api)
 app.set('view engine', 'ejs')
-
-app.get('/', async (req, res, next) => {
-  try {
-    const queryResult = await Movies.find({})
-    res.render('index', { queryResult })
-  } catch (err) {
-    res.status(500)
-    res.render('error')
-  }
-})
-
-app.delete('/', async (req, res) => {
-  const {
-    body: { id },
-  } = req
-  try {
-    const deleteRes = await Movies.findByIdAndDelete(id)
-    console.log('TCL: deleteRes', deleteRes)
-  } catch (err) {
-    console.error(err)
-  }
-  res.redirect(302, '/')
-})
-
-app.put('/', async (req, res) => {
-  const {
-    body: { id, rank, title },
-  } = req
-  try {
-    const updateRes = await Movies.findByIdAndUpdate(id, {
-      rank,
-      title,
-    })
-  } catch (error) {
-    console.error(err)
-  }
-  res.redirect(302, '/')
-})
-
-app.post('/', async (req, res) => {
-  try {
-    const { data: movies } = await axios.get(
-      'https://raw.githubusercontent.com/hjorturlarsen/IMDB-top-100/master/data/movies.json'
-    )
-
-    const result = await Movies.findAndInsertMany(movies)
-    console.log('TCL: result', result)
-  } catch (error) {
-    console.error(error)
-  }
-
-  res.redirect(302, '/')
-})
 
 app.listen(portNumber, () => {
   console.log(`Express web server started: ${portNumber}`)
